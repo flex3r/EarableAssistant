@@ -3,7 +3,9 @@ package com.flxrs.earablecompass
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.flxrs.earablecompass.ui.main.MainFragment
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
+@ExperimentalCoroutinesApi
 class MainActivity : AppCompatActivity(R.layout.main_activity) {
 
     override fun onCreate(savedInstanceState: Bundle?) {

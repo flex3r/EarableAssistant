@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">Earable Compass</string>
+    <string name="permissions_disclaimer">Permissions need to be accepted for bluetooth functionality</string>
+    <string name="bluetooth_disclaimer">Bluetooth needs to be enabled before a connection can be made</string>
+    <string name="enable">Enable</string>
+    <string name="accept">Accept</string>
+    <string name="searching_device">Searching for eSense device</string>
+    <string name="found_device">Found device: %1$s, connecting</string>
+    <string name="connected_to_device">Connected to device: %1$s</string>
 </resources>
