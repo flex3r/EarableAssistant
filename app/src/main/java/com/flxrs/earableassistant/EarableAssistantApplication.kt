@@ -1,4 +1,4 @@
-package com.flxrs.earablecompass
+package com.flxrs.earableassistant
 
 import android.app.Application
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -7,7 +7,7 @@ import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 
 @ExperimentalCoroutinesApi
-class EarableCompassApplication : Application() {
+class EarableAssistantApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()

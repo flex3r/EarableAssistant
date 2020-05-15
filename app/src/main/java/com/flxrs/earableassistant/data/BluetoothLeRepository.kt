@@ -1,7 +1,8 @@
-package com.flxrs.earablecompass.data
+package com.flxrs.earableassistant.data
 
-import android.util.Log
-import com.flxrs.earablecompass.ble.ConnectionState
+import com.flxrs.earableassistant.ble.CombinedState
+import com.flxrs.earableassistant.ble.ConnectionState
+import com.flxrs.earableassistant.ble.ScanState
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,10 +16,11 @@ class BluetoothLeRepository(private val scope: CoroutineScope) {
     private var eventJob: Job? = null
     private var resetJob: Job? = null
 
-    private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
-    val connectionState: StateFlow<ConnectionState> = _connectionState
     private val _sensorData = MutableStateFlow(GyroData())
+    private val _state = MutableStateFlow(CombinedState())
+
     val sensorData: StateFlow<GyroData> = _sensorData
+    val state: StateFlow<CombinedState> = _state
 
     private val _motionEvent = MutableStateFlow<MotionEvent>(MotionEvent.Unknown)
     val motionEvent: StateFlow<MotionEvent> = _motionEvent
@@ -37,7 +39,7 @@ class BluetoothLeRepository(private val scope: CoroutineScope) {
         byteArray?.let { bytes ->
             val gyroData = GyroData.fromIMUBytes(bytes)
             val accData = AccelerationData.fromIMUBytes(bytes, offset)
-            when(gyroData.event) {
+            when (gyroData.event) {
                 is MotionEvent.Unknown -> startResetJob()
                 else -> matchEvent(gyroData.event)
             }
@@ -46,12 +48,16 @@ class BluetoothLeRepository(private val scope: CoroutineScope) {
         }
     }
 
-    fun updateConnectionState(state: ConnectionState) {
-        _connectionState.value = state
+    fun setConnectionStatte(state: ConnectionState) {
+        _state.value = _state.value.copy(connectionState = state)
     }
 
-    fun resetEvent() {
+    fun resetMotionEvent() {
         _motionEvent.value = MotionEvent.Unknown
+    }
+
+    fun setScanState(state: ScanState) {
+        _state.value = _state.value.copy(scanState = state)
     }
 
     private fun startResetJob() {

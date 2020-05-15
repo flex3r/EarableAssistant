@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Earable Compass</string>
+    <string name="app_name">Earable Assistant</string>
     <string name="permissions_disclaimer">Permissions need to be accepted for bluetooth functionality</string>
     <string name="bluetooth_disclaimer">Bluetooth needs to be enabled before a connection can be made</string>
     <string name="enable">Enable</string>
@@ -7,4 +7,8 @@
     <string name="searching_device">Searching for eSense device</string>
     <string name="found_device">Found device: %1$s, connecting</string>
     <string name="connected_to_device">Connected to device: %1$s</string>
+    <string name="start_scan">Start scan</string>
+    <string name="stop_scan">Stop scan</string>
+    <string name="scan_to_get_started">Start scanning to get started!</string>
+    <string name="disconnect">Disconnect</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.flxrs.earablecompass.data
+package com.flxrs.earableassistant.data
 
 data class AccelerationData(val x: Double, val y: Double, val z: Double) {
     companion object {

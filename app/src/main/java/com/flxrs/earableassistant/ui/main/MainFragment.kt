@@ -1,4 +1,4 @@
-package com.flxrs.earablecompass.ui.main
+package com.flxrs.earableassistant.ui.main
 
 import android.content.ComponentName
 import android.content.Context
@@ -13,12 +13,13 @@ import androidx.activity.invoke
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.observe
-import com.flxrs.earablecompass.R
-import com.flxrs.earablecompass.ble.BleService
-import com.flxrs.earablecompass.ble.ConnectionState
-import com.flxrs.earablecompass.ble.EnableBluetoothContract
-import com.flxrs.earablecompass.data.MotionEvent
-import com.flxrs.earablecompass.databinding.MainFragmentBinding
+import com.flxrs.earableassistant.R
+import com.flxrs.earableassistant.ble.BleService
+import com.flxrs.earableassistant.ble.ConnectionState
+import com.flxrs.earableassistant.ble.EnableBluetoothContract
+import com.flxrs.earableassistant.ble.ScanState
+import com.flxrs.earableassistant.data.MotionEvent
+import com.flxrs.earableassistant.databinding.MainFragmentBinding
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -33,10 +34,6 @@ class MainFragment : Fragment() {
     private val viewModel: MainViewModel by viewModel()
     private lateinit var binding: MainFragmentBinding
     private var bleService: BleService? = null
-//    private val gyroSeriesX = LineGraphSeries<DataPoint>().apply { color = Color.BLUE }
-//    private val gyroSeriesY = LineGraphSeries<DataPoint>().apply { color = Color.GREEN }
-//    private val gyroSeriesZ = LineGraphSeries<DataPoint>().apply { color = Color.RED }
-//    private var currentX = 0.0
 
     private val enableBluetoothRegistration = registerForActivityResult(EnableBluetoothContract()) { result ->
         when {
@@ -59,13 +56,12 @@ class MainFragment : Fragment() {
         binding = MainFragmentBinding.inflate(inflater, container, false).apply {
             lifecycleOwner = viewLifecycleOwner
             vm = viewModel
-//            with(graph.viewport) {
-//                isScalable = true
-//                isScrollable = true
-//            }
-//            graph.addSeries(gyroSeriesX)
-//            graph.addSeries(gyroSeriesY)
-//            graph.addSeries(gyroSeriesZ)
+            toggleScanButton.setOnClickListener {
+                when (viewModel.state.value?.scanState) {
+                    ScanState.STARTED -> bleService?.stopScan()
+                    ScanState.STOPPED -> bleService?.findESenseAndConnect()
+                }
+            }
         }
 
         return binding.root
@@ -75,12 +71,6 @@ class MainFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         requestPermissions()
         viewModel.apply {
-            data.observe(viewLifecycleOwner) {
-//                gyroSeriesX.appendData(DataPoint(currentX, it.x), true, 500)
-//                gyroSeriesY.appendData(DataPoint(currentX, it.y), true, 500)
-//                gyroSeriesZ.appendData(DataPoint(currentX, it.z), true, 500)
-//                currentX++
-            }
             motionEvent.observe(viewLifecycleOwner) {
                 when (it) {
                     is MotionEvent.Nod, MotionEvent.Shake -> {
@@ -89,11 +79,19 @@ class MainFragment : Fragment() {
                     }
                 }
             }
-            connectionStatus.observe(viewLifecycleOwner) {
-                binding.connectionStatus.text = when (it) {
-                    is ConnectionState.Disconnected -> getString(R.string.searching_device)
-                    is ConnectionState.Connecting -> getString(R.string.found_device, it.deviceName)
-                    is ConnectionState.Connected -> getString(R.string.connected_to_device, it.deviceName)
+            state.observe(viewLifecycleOwner) {
+                binding.connectionStatus.text = when {
+                    it.connectionState is ConnectionState.Connected -> getString(R.string.connected_to_device, it.connectionState.deviceName)
+                    it.connectionState is ConnectionState.Connecting -> getString(R.string.found_device, it.connectionState.deviceName)
+                    it.connectionState is ConnectionState.Disconnected && it.scanState == ScanState.STOPPED -> getString(R.string.scan_to_get_started)
+                    else -> getString(R.string.searching_device)
+                }
+                binding.toggleScanButton.text = when (it.scanState) {
+                    ScanState.STARTED -> getString(R.string.stop_scan)
+                    ScanState.STOPPED -> when (it.connectionState) {
+                        is ConnectionState.Connected -> getString(R.string.disconnect)
+                        else -> getString(R.string.start_scan)
+                    }
                 }
             }
         }

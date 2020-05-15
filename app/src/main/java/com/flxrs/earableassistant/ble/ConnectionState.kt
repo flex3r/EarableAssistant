@@ -1,4 +1,4 @@
-package com.flxrs.earablecompass.ble
+package com.flxrs.earableassistant.ble
 
 sealed class ConnectionState {
     object Disconnected : ConnectionState()

@@ -1,4 +1,4 @@
-package com.flxrs.earablecompass.data
+package com.flxrs.earableassistant.data
 
 import kotlin.math.absoluteValue
 

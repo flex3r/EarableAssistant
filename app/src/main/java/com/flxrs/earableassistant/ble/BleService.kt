@@ -1,4 +1,4 @@
-package com.flxrs.earablecompass.ble
+package com.flxrs.earableassistant.ble
 
 import android.app.Service
 import android.bluetooth.*
@@ -10,8 +10,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Binder
 import android.os.IBinder
-import android.util.Log
-import com.flxrs.earablecompass.data.BluetoothLeRepository
+import com.flxrs.earableassistant.data.BluetoothLeRepository
 import kotlinx.coroutines.*
 import org.koin.core.KoinComponent
 import org.koin.core.inject
@@ -61,23 +60,14 @@ class BleService : Service(), KoinComponent {
     }
 
     fun findESenseAndConnect() = scope.launch {
-        val callback = object : ScanCallback() {
-            override fun onScanResult(callbackType: Int, result: ScanResult?) {
-                result?.device?.let { device ->
-                    if (device.name?.startsWith("eSense") == true) {
-                        bluetoothAdapter.bluetoothLeScanner.stopScan(this)
-                        if (!device.createBond()) {
-                            device.connect()
-                        }
-                    }
-                }
-            }
-        }
-        bluetoothAdapter.bluetoothLeScanner.startScan(callback)
+        bluetoothGatt?.disconnect()
+        bluetoothAdapter.bluetoothLeScanner.startScan(scanCallback)
+        repository.setScanState(ScanState.STARTED)
     }
 
-    fun BluetoothDevice.connect() {
-        connectGatt(this@BleService, true, callback, BluetoothDevice.TRANSPORT_LE)
+    fun stopScan() {
+        bluetoothAdapter.bluetoothLeScanner.stopScan(scanCallback)
+        repository.setScanState(ScanState.STOPPED)
     }
 
     fun isBluetoothEnabled() = bluetoothAdapter.isEnabled
@@ -96,7 +86,25 @@ class BleService : Service(), KoinComponent {
         }
     }
 
-    private val callback = object : BluetoothGattCallback() {
+    private fun BluetoothDevice.connect() {
+        connectGatt(this@BleService, true, gattCallback, BluetoothDevice.TRANSPORT_LE)
+    }
+
+    private val scanCallback = object : ScanCallback() {
+        override fun onScanResult(callbackType: Int, result: ScanResult?) {
+            result?.device?.let { device ->
+                if (device.name?.startsWith("eSense") == true) {
+                    bluetoothAdapter.bluetoothLeScanner.stopScan(this)
+                    repository.setScanState(ScanState.STOPPED)
+                    if (!device.createBond()) {
+                        device.connect()
+                    }
+                }
+            }
+        }
+    }
+
+    private val gattCallback = object : BluetoothGattCallback() {
         override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
             gatt?.apply {
                 services.forEach { service ->
@@ -126,10 +134,13 @@ class BleService : Service(), KoinComponent {
                 BluetoothProfile.STATE_CONNECTED -> {
                     gatt.discoverServices()
                     bluetoothGatt = gatt
-                    repository.updateConnectionState(ConnectionState.Connected(gatt.device.name))
+                    repository.setConnectionStatte(ConnectionState.Connected(gatt.device.name))
                 }
-                BluetoothProfile.STATE_CONNECTING -> repository.updateConnectionState(ConnectionState.Connecting(gatt.device.name))
-                else -> repository.updateConnectionState(ConnectionState.Disconnected)
+                BluetoothProfile.STATE_CONNECTING -> repository.setConnectionStatte(ConnectionState.Connecting(gatt.device.name))
+                else -> {
+                    repository.setConnectionStatte(ConnectionState.Disconnected)
+                    findESenseAndConnect()
+                }
             }
 
         }
@@ -141,7 +152,6 @@ class BleService : Service(), KoinComponent {
         }
 
         override fun onCharacteristicRead(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?, status: Int) {
-            Log.d("XXX", "Read characteristic: ${characteristic?.uuid} ${characteristic?.value} ${status == BluetoothGatt.GATT_SUCCESS} $status")
             if (characteristic != null && characteristic.uuid == accOffsetUUID && status == BluetoothGatt.GATT_SUCCESS) {
                 repository.setGyroOffset(characteristic.value)
             }

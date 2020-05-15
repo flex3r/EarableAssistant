@@ -1,4 +1,4 @@
-package com.flxrs.earablecompass.ble
+package com.flxrs.earableassistant.ble
 
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter

@@ -1,4 +1,4 @@
-package com.flxrs.earablecompass.data
+package com.flxrs.earableassistant.data
 
 sealed class MotionEvent {
     open val msg = ""

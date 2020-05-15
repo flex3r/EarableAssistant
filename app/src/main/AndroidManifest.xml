@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.flxrs.earablecompass">
+    package="com.flxrs.earableassistant">
 
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -13,7 +13,7 @@
         android:required="true" />
 
     <application
-        android:name=".EarableCompassApplication"
+        android:name="com.flxrs.earableassistant.EarableAssistantApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -21,14 +21,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApp"
         tools:ignore="AllowBackup">
-        <activity android:name=".MainActivity">
+        <activity android:name="com.flxrs.earableassistant.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <service android:name=".ble.BleService" />
+        <service android:name="com.flxrs.earableassistant.ble.BleService" />
     </application>
 
 </manifest>

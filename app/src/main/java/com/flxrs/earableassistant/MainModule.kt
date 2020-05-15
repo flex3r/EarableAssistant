@@ -1,7 +1,7 @@
-package com.flxrs.earablecompass
+package com.flxrs.earableassistant
 
-import com.flxrs.earablecompass.data.BluetoothLeRepository
-import com.flxrs.earablecompass.ui.main.MainViewModel
+import com.flxrs.earableassistant.data.BluetoothLeRepository
+import com.flxrs.earableassistant.ui.main.MainViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

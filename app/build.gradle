@@ -8,7 +8,7 @@ android {
     dataBinding.enabled = true
 
     defaultConfig {
-        applicationId "com.flxrs.earablecompass"
+        applicationId "com.flxrs.earableassistant"
         minSdkVersion 23
         targetSdkVersion 29
         versionCode 1
@@ -64,8 +64,6 @@ dependencies {
     implementation "org.koin:koin-core:$koin_version"
     implementation "org.koin:koin-android:$koin_version"
     implementation "org.koin:koin-androidx-viewmodel:$koin_version"
-
-    implementation 'com.jjoe64:graphview:4.2.2'
 
     testImplementation 'junit:junit:4.13'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'

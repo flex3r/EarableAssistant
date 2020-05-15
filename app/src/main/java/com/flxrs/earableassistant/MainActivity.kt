@@ -1,8 +1,8 @@
-package com.flxrs.earablecompass
+package com.flxrs.earableassistant
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.flxrs.earablecompass.ui.main.MainFragment
+import com.flxrs.earableassistant.ui.main.MainFragment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi
