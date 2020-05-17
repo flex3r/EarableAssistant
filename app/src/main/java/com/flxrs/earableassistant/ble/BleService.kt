@@ -1,5 +1,6 @@
 package com.flxrs.earableassistant.ble
 
+import android.annotation.SuppressLint
 import android.app.Service
 import android.bluetooth.*
 import android.bluetooth.le.ScanCallback
@@ -10,18 +11,25 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Binder
 import android.os.IBinder
+import android.telecom.TelecomManager
+import android.telephony.TelephonyManager
+import com.flxrs.earableassistant.call.CallReceiver
 import com.flxrs.earableassistant.data.BluetoothLeRepository
+import com.flxrs.earableassistant.data.MotionEvent
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
 import org.koin.core.KoinComponent
 import org.koin.core.inject
 import java.util.*
 
+@Suppress("DEPRECATION")
 @ExperimentalCoroutinesApi
 class BleService : Service(), KoinComponent {
 
     private val binder = LocalBinder()
     private val repository: BluetoothLeRepository by inject()
     private val scope: CoroutineScope by inject()
+
     private var bluetoothGatt: BluetoothGatt? = null
     private val bluetoothAdapter: BluetoothAdapter by lazy(LazyThreadSafetyMode.NONE) {
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
@@ -42,6 +50,16 @@ class BleService : Service(), KoinComponent {
     }
     private val characteristics = mutableMapOf<UUID, BluetoothGattCharacteristic>()
 
+    private val telecomManager: TelecomManager by lazy(LazyThreadSafetyMode.NONE) {
+        getSystemService(Context.TELECOM_SERVICE) as TelecomManager
+    }
+    private val callReceiver = CallReceiver { callState ->
+        when (callState) {
+            TelephonyManager.CALL_STATE_RINGING -> bluetoothGatt?.enableIMUData()
+            else -> bluetoothGatt?.disableIMUData()
+        }
+    }
+
     inner class LocalBinder(val service: BleService = this@BleService) : Binder()
 
     override fun onBind(intent: Intent?): IBinder? = binder
@@ -50,8 +68,27 @@ class BleService : Service(), KoinComponent {
         return super.onUnbind(intent)
     }
 
+    @SuppressLint("MissingPermission")
     override fun onCreate() {
         registerReceiver(earableCompassBroadcastReceiver, IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED))
+        registerReceiver(callReceiver, IntentFilter(TelephonyManager.ACTION_PHONE_STATE_CHANGED))
+
+        scope.launch {
+            repository.motionEvent.collect {
+                if (telecomManager.isInCall) {
+                    when (it) {
+                        is MotionEvent.Nod -> {
+                            telecomManager.acceptRingingCall()
+                            bluetoothGatt?.disableIMUData()
+                        }
+                        is MotionEvent.Shake -> {
+                            telecomManager.endCall()
+                            bluetoothGatt?.disableIMUData()
+                        }
+                    }
+                }
+            }
+        }
     }
 
     override fun onDestroy() {
@@ -74,10 +111,7 @@ class BleService : Service(), KoinComponent {
 
     fun closeGattConnection() {
         bluetoothGatt = bluetoothGatt?.run {
-            characteristics[dataServiceUUID]?.let {
-                it.value = disableData
-                writeCharacteristic(it)
-            }
+            disableIMUData()
             characteristics.clear()
 
             disconnect()
@@ -86,8 +120,19 @@ class BleService : Service(), KoinComponent {
         }
     }
 
-    private fun BluetoothDevice.connect() {
-        connectGatt(this@BleService, true, gattCallback, BluetoothDevice.TRANSPORT_LE)
+    private fun BluetoothDevice.connect(): BluetoothGatt = connectGatt(this@BleService, true, gattCallback, BluetoothDevice.TRANSPORT_LE)
+    private fun BluetoothGatt.enableIMUData() {
+        characteristics[IMU_CONFIG_CHARACTERISTIC_UUID]?.let {
+            it.value = ENABLE_IMU_BYTES
+            writeCharacteristic(it)
+        }
+    }
+
+    private fun BluetoothGatt.disableIMUData() {
+        characteristics[IMU_CONFIG_CHARACTERISTIC_UUID]?.let {
+            it.value = DISABLE_IMU_BYTES
+            writeCharacteristic(it)
+        }
     }
 
     private val scanCallback = object : ScanCallback() {
@@ -113,16 +158,11 @@ class BleService : Service(), KoinComponent {
                     }
                 }
                 scope.launch {
-                    characteristics[dataEnableCharacteristicUUID]?.let {
-                        it.value = enableData
-                        writeCharacteristic(it)
-                    }
+                    readCharacteristic(characteristics[ACC_OFFSET_UUID])
 
-                    delay(500)
-                    readCharacteristic(characteristics[accOffsetUUID])
-
-                    delay(500)
-                    setCharacteristicNotification(characteristics[dataCharacteristicUUID], true)
+                    // add delay to make sure that device is not busy
+                    delay(100)
+                    setCharacteristicNotification(characteristics[IMU_DATA_CHARACTERISTIC_UUID], true)
                 }
 
             }
@@ -146,24 +186,24 @@ class BleService : Service(), KoinComponent {
         }
 
         override fun onCharacteristicChanged(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?) {
-            if (characteristic?.uuid == dataCharacteristicUUID) {
+            if (characteristic?.uuid == IMU_DATA_CHARACTERISTIC_UUID) {
                 repository.updateGyroData(characteristic?.value)
             }
         }
 
         override fun onCharacteristicRead(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?, status: Int) {
-            if (characteristic != null && characteristic.uuid == accOffsetUUID && status == BluetoothGatt.GATT_SUCCESS) {
+            if (characteristic != null && characteristic.uuid == ACC_OFFSET_UUID && status == BluetoothGatt.GATT_SUCCESS) {
                 repository.setGyroOffset(characteristic.value)
             }
         }
     }
 
     companion object {
-        private val dataServiceUUID = UUID.fromString("0000ff06-0000-1000-8000-00805f9b34fb")
-        private val dataEnableCharacteristicUUID = UUID.fromString("0000ff07-0000-1000-8000-00805f9b34fb")
-        private val dataCharacteristicUUID = UUID.fromString("0000ff08-0000-1000-8000-00805f9b34fb")
-        private val accOffsetUUID = UUID.fromString("0000ff0d-0000-1000-8000-00805f9b34fb")
-        private val enableData = byteArrayOf(0x53, 0x35, 0x02, 0x01, 0x32)
-        private val disableData = byteArrayOf(0x53, 0x02, 0x02, 0x00, 0x00)
+        private val DATA_SERVICE_UUID = UUID.fromString("0000ff06-0000-1000-8000-00805f9b34fb")
+        private val IMU_CONFIG_CHARACTERISTIC_UUID = UUID.fromString("0000ff07-0000-1000-8000-00805f9b34fb")
+        private val IMU_DATA_CHARACTERISTIC_UUID = UUID.fromString("0000ff08-0000-1000-8000-00805f9b34fb")
+        private val ACC_OFFSET_UUID = UUID.fromString("0000ff0d-0000-1000-8000-00805f9b34fb")
+        private val ENABLE_IMU_BYTES = byteArrayOf(0x53, 0x35, 0x02, 0x01, 0x32)
+        private val DISABLE_IMU_BYTES = byteArrayOf(0x53, 0x02, 0x02, 0x00, 0x00)
     }
 }

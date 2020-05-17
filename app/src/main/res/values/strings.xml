@@ -11,4 +11,5 @@
     <string name="stop_scan">Stop scan</string>
     <string name="scan_to_get_started">Start scanning to get started!</string>
     <string name="disconnect">Disconnect</string>
+    <string name="service_running">Service is running and waiting for calls,\nnod/shake your head to accept/refuse calls</string>
 </resources>

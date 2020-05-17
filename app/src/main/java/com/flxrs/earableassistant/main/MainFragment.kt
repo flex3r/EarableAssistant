@@ -1,4 +1,4 @@
-package com.flxrs.earableassistant.ui.main
+package com.flxrs.earableassistant.main
 
 import android.content.ComponentName
 import android.content.Context
@@ -45,6 +45,7 @@ class MainFragment : Fragment() {
     }
     private val requestPermissionsRegistration = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { map ->
         when {
+            // all permissions granted, start/bind service
             map.all { it.value } -> requireActivity().bindService(Intent(requireContext(), BleService::class.java), serviceConnection, Context.BIND_AUTO_CREATE)
             else -> Snackbar.make(binding.root, R.string.permissions_disclaimer, Snackbar.LENGTH_INDEFINITE)
                 .setAction(R.string.accept) { requestPermissions() }
@@ -111,7 +112,14 @@ class MainFragment : Fragment() {
     }
 
     private fun requestPermissions() {
-        requestPermissionsRegistration(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.BLUETOOTH_ADMIN, android.Manifest.permission.READ_PHONE_STATE))
+        requestPermissionsRegistration(
+            arrayOf(
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.BLUETOOTH_ADMIN,
+                android.Manifest.permission.READ_PHONE_STATE,
+                android.Manifest.permission.ANSWER_PHONE_CALLS
+            )
+        )
     }
 
     private val serviceConnection = object : ServiceConnection {

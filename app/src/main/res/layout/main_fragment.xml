@@ -16,7 +16,7 @@
         android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".ui.main.MainFragment">
+        tools:context=".main.MainFragment">
 
         <TextView
             android:id="@+id/connectionStatus"
@@ -52,8 +52,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:barrierAllowsGoneWidgets="true"
-            app:constraint_referenced_ids="connectionStatus,progressBar"
-            app:barrierDirection="bottom"/>
+            app:barrierDirection="bottom"
+            app:constraint_referenced_ids="connectionStatus,progressBar" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/toggleScanButton"
@@ -64,6 +64,19 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/barrier" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:gravity="center_horizontal"
+            android:text="@string/service_running"
+            android:textAppearance="@style/TextAppearance.MyTheme.Subtitle1"
+            android:visibility="@{vm.state.isConnected ? View.VISIBLE : View.GONE}"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/toggleScanButton" />
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId "com.flxrs.earableassistant"
-        minSdkVersion 23
+        minSdkVersion 28 // to answer phone calls programmatically without having to do some voodoo reflection magic
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"

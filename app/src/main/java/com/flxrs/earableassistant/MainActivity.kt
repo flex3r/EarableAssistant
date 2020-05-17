@@ -2,7 +2,7 @@ package com.flxrs.earableassistant
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.flxrs.earableassistant.ui.main.MainFragment
+import com.flxrs.earableassistant.main.MainFragment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi
