@@ -1,7 +1,7 @@
 package com.flxrs.earableassistant
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import com.flxrs.earableassistant.main.MainFragment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
@@ -13,8 +13,8 @@ class MainActivity : AppCompatActivity(R.layout.main_activity) {
 
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
-                    .replace(R.id.container, MainFragment.newInstance())
-                    .commitNow()
+                .replace(R.id.container, MainFragment.newInstance())
+                .commitNow()
         }
     }
 }

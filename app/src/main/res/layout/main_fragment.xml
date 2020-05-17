@@ -7,7 +7,7 @@
 
         <variable
             name="vm"
-            type="com.flxrs.earableassistant.ui.main.MainViewModel" />
+            type="com.flxrs.earableassistant.main.MainViewModel" />
 
         <import type="android.view.View" />
     </data>

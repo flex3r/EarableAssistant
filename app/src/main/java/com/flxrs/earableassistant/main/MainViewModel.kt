@@ -1,6 +1,7 @@
 package com.flxrs.earableassistant.main
 
-import androidx.lifecycle.*
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
 import com.flxrs.earableassistant.data.BluetoothLeRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
