@@ -13,7 +13,7 @@ import android.os.Binder
 import android.os.IBinder
 import android.telecom.TelecomManager
 import android.telephony.TelephonyManager
-import com.flxrs.earableassistant.call.CallReceiver
+import android.util.Log
 import com.flxrs.earableassistant.data.BluetoothLeRepository
 import com.flxrs.earableassistant.data.MotionEvent
 import kotlinx.coroutines.*
@@ -53,10 +53,24 @@ class BleService : Service(), KoinComponent {
     private val telecomManager: TelecomManager by lazy(LazyThreadSafetyMode.NONE) {
         getSystemService(Context.TELECOM_SERVICE) as TelecomManager
     }
-    private val callReceiver = CallReceiver { callState ->
-        when (callState) {
-            TelephonyManager.CALL_STATE_RINGING -> bluetoothGatt?.enableIMUData()
-            else -> bluetoothGatt?.disableIMUData()
+
+    private val callReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != TelephonyManager.ACTION_PHONE_STATE_CHANGED) return
+
+            val state = when (intent.getStringExtra(TelephonyManager.EXTRA_STATE)) {
+                TelephonyManager.EXTRA_STATE_IDLE -> TelephonyManager.CALL_STATE_IDLE
+                TelephonyManager.EXTRA_STATE_OFFHOOK -> TelephonyManager.CALL_STATE_OFFHOOK
+                else -> TelephonyManager.CALL_STATE_RINGING
+            }
+
+            if (lastCallState != state) {
+                lastCallState = state
+                when (state) {
+                    TelephonyManager.CALL_STATE_RINGING -> bluetoothGatt?.enableIMUData()
+                    else -> bluetoothGatt?.disableIMUData()
+                }
+            }
         }
     }
 
@@ -205,5 +219,7 @@ class BleService : Service(), KoinComponent {
         private val ACC_OFFSET_UUID = UUID.fromString("0000ff0d-0000-1000-8000-00805f9b34fb")
         private val ENABLE_IMU_BYTES = byteArrayOf(0x53, 0x35, 0x02, 0x01, 0x32)
         private val DISABLE_IMU_BYTES = byteArrayOf(0x53, 0x02, 0x02, 0x00, 0x00)
+
+        private var lastCallState = TelephonyManager.CALL_STATE_IDLE
     }
 }

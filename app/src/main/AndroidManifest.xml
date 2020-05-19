@@ -30,11 +30,6 @@
         </activity>
 
         <service android:name="com.flxrs.earableassistant.ble.BleService" />
-        <receiver android:name=".call.CallReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.PHONE_STATE" />
-            </intent-filter>
-        </receiver>
     </application>
 
 </manifest>
