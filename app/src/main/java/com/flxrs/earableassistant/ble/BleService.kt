@@ -22,6 +22,7 @@ import org.koin.core.KoinComponent
 import org.koin.core.inject
 import java.util.*
 
+@FlowPreview
 @Suppress("DEPRECATION")
 @ExperimentalCoroutinesApi
 class BleService : Service(), KoinComponent {
@@ -92,10 +93,12 @@ class BleService : Service(), KoinComponent {
                 if (telecomManager.isInCall) {
                     when (it) {
                         is MotionEvent.Nod -> {
+                            Log.i(TAG, "Got MotionEvent.Nod, accepting call")
                             telecomManager.acceptRingingCall()
                             bluetoothGatt?.disableIMUData()
                         }
                         is MotionEvent.Shake -> {
+                            Log.i(TAG, "Got MotionEvent.Shake, rejecting call")
                             telecomManager.endCall()
                             bluetoothGatt?.disableIMUData()
                         }
@@ -136,6 +139,7 @@ class BleService : Service(), KoinComponent {
 
     private fun BluetoothDevice.connect(): BluetoothGatt = connectGatt(this@BleService, true, gattCallback, BluetoothDevice.TRANSPORT_LE)
     private fun BluetoothGatt.enableIMUData() {
+        Log.i(TAG, "Starting IMU data capture..")
         characteristics[IMU_CONFIG_CHARACTERISTIC_UUID]?.let {
             it.value = ENABLE_IMU_BYTES
             writeCharacteristic(it)
@@ -143,6 +147,7 @@ class BleService : Service(), KoinComponent {
     }
 
     private fun BluetoothGatt.disableIMUData() {
+        Log.i(TAG, "Disabling IMU data capture..")
         characteristics[IMU_CONFIG_CHARACTERISTIC_UUID]?.let {
             it.value = DISABLE_IMU_BYTES
             writeCharacteristic(it)
@@ -154,7 +159,7 @@ class BleService : Service(), KoinComponent {
             result?.device?.let { device ->
                 if (device.name?.startsWith("eSense") == true) {
                     bluetoothAdapter.bluetoothLeScanner.stopScan(this)
-                    repository.setScanState(ScanState.STOPPED)
+                    repository.setState(CombinedState(ConnectionState.Connecting(device.name), ScanState.STOPPED))
                     if (!device.createBond()) {
                         device.connect()
                     }
@@ -213,6 +218,8 @@ class BleService : Service(), KoinComponent {
     }
 
     companion object {
+        private val TAG = BleService::class.java.simpleName
+
         private val DATA_SERVICE_UUID = UUID.fromString("0000ff06-0000-1000-8000-00805f9b34fb")
         private val IMU_CONFIG_CHARACTERISTIC_UUID = UUID.fromString("0000ff07-0000-1000-8000-00805f9b34fb")
         private val IMU_DATA_CHARACTERISTIC_UUID = UUID.fromString("0000ff08-0000-1000-8000-00805f9b34fb")

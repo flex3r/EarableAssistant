@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -22,8 +23,10 @@ import com.flxrs.earableassistant.data.MotionEvent
 import com.flxrs.earableassistant.databinding.MainFragmentBinding
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
+@FlowPreview
 @ExperimentalCoroutinesApi
 class MainFragment : Fragment() {
 
@@ -75,7 +78,6 @@ class MainFragment : Fragment() {
             motionEvent.observe(viewLifecycleOwner) {
                 when (it) {
                     is MotionEvent.Nod, MotionEvent.Shake -> {
-                        viewModel.resetEvent()
                         Snackbar.make(binding.root, "${it.msg} detected", Snackbar.LENGTH_SHORT).show()
                     }
                 }
@@ -90,8 +92,8 @@ class MainFragment : Fragment() {
                 binding.toggleScanButton.text = when (it.scanState) {
                     ScanState.STARTED -> getString(R.string.stop_scan)
                     ScanState.STOPPED -> when (it.connectionState) {
-                        is ConnectionState.Connected -> getString(R.string.disconnect)
-                        else -> getString(R.string.start_scan)
+                        is ConnectionState.Disconnected -> getString(R.string.start_scan)
+                        else -> getString(R.string.disconnect)
                     }
                 }
             }
