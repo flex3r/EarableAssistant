@@ -110,6 +110,8 @@ class BleService : Service(), KoinComponent {
 
     override fun onDestroy() {
         scope.cancel()
+        unregisterReceiver(callReceiver)
+        unregisterReceiver(earableCompassBroadcastReceiver)
         closeGattConnection()
     }
 

@@ -90,7 +90,7 @@ class BluetoothLeRepository(private val scope: CoroutineScope) {
     private suspend fun matchEvent(event: MotionEvent) {
         mutex.withLock { lastEvents.add(event) }
 
-        delay(1500)
+        delay(1000)
         mutex.withLock {
             // make sure that all motion events are the same
             if (lastEvents.all { it == event } && lastEvents.size > event.threshold) {

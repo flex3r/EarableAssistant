@@ -12,6 +12,6 @@ sealed class MotionEvent {
 
     object Shake : MotionEvent() {
         override val msg = "Shake"
-        override val threshold = 15
+        override val threshold = 10
     }
 }
