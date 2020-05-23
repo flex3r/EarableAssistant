@@ -3,18 +3,18 @@ package com.flxrs.earableassistant.data
 import com.flxrs.earableassistant.ble.CombinedState
 import com.flxrs.earableassistant.ble.ConnectionState
 import com.flxrs.earableassistant.ble.ScanState
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-
-@FlowPreview
-@ExperimentalCoroutinesApi
 class BluetoothLeRepository(private val scope: CoroutineScope) {
 
     private var offset = Triple(0, 0, 0)

@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -22,12 +21,8 @@ import com.flxrs.earableassistant.ble.ScanState
 import com.flxrs.earableassistant.data.MotionEvent
 import com.flxrs.earableassistant.databinding.MainFragmentBinding
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-@FlowPreview
-@ExperimentalCoroutinesApi
 class MainFragment : Fragment() {
 
     companion object {
@@ -77,7 +72,7 @@ class MainFragment : Fragment() {
         viewModel.apply {
             motionEvent.observe(viewLifecycleOwner) {
                 when (it) {
-                    is MotionEvent.Nod, MotionEvent.Shake -> {
+                    is MotionEvent.Nod, is MotionEvent.Shake -> {
                         Snackbar.make(binding.root, "${it.msg} detected", Snackbar.LENGTH_SHORT).show()
                     }
                 }

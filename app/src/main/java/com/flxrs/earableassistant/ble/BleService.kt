@@ -22,9 +22,7 @@ import org.koin.core.KoinComponent
 import org.koin.core.inject
 import java.util.*
 
-@FlowPreview
 @Suppress("DEPRECATION")
-@ExperimentalCoroutinesApi
 class BleService : Service(), KoinComponent {
 
     private val binder = LocalBinder()
