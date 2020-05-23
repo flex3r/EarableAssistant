@@ -4,4 +4,5 @@ data class CombinedState(val connectionState: ConnectionState = ConnectionState.
     private val isScanning = scanState == ScanState.STARTED
     val isConnected = connectionState is ConnectionState.Connected
     val isScanningOrConnecting = (isScanning && !isConnected) || connectionState is ConnectionState.Connecting
+    val isNotConnecting = connectionState !is ConnectionState.Connecting
 }

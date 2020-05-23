@@ -56,9 +56,13 @@ class MainFragment : Fragment() {
             lifecycleOwner = viewLifecycleOwner
             vm = viewModel
             toggleScanButton.setOnClickListener {
-                when (viewModel.state.value?.scanState) {
+                val state = viewModel.state.value ?: return@setOnClickListener
+                when (state.scanState) {
                     ScanState.STARTED -> bleService?.stopScan()
-                    ScanState.STOPPED -> bleService?.findESenseAndConnect()
+                    ScanState.STOPPED -> when (state.connectionState) {
+                        is ConnectionState.Disconnected -> bleService?.findESenseAndConnect()
+                        else -> bleService?.disconnect()
+                    }
                 }
             }
         }

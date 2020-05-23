@@ -16,8 +16,11 @@ import android.telephony.TelephonyManager
 import android.util.Log
 import com.flxrs.earableassistant.data.BluetoothLeRepository
 import com.flxrs.earableassistant.data.MotionEvent
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import org.koin.core.KoinComponent
 import org.koin.core.inject
 import java.util.*
@@ -124,6 +127,8 @@ class BleService : Service(), KoinComponent {
         repository.setScanState(ScanState.STOPPED)
     }
 
+    fun disconnect() = bluetoothGatt?.disconnect()
+
     fun isBluetoothEnabled() = bluetoothAdapter.isEnabled
 
     fun closeGattConnection() {
@@ -196,10 +201,7 @@ class BleService : Service(), KoinComponent {
                     repository.setConnectionStatte(ConnectionState.Connected(gatt.device.name))
                 }
                 BluetoothProfile.STATE_CONNECTING -> repository.setConnectionStatte(ConnectionState.Connecting(gatt.device.name))
-                else -> {
-                    repository.setConnectionStatte(ConnectionState.Disconnected)
-                    findESenseAndConnect()
-                }
+                else -> repository.setConnectionStatte(ConnectionState.Disconnected)
             }
 
         }
