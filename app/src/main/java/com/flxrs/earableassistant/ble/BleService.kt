@@ -120,7 +120,7 @@ class BleService : Service(), KoinComponent {
         scope.launch {
             bluetoothGatt?.disconnect()
             bluetoothAdapter.bluetoothLeScanner.startScan(scanCallback)
-            repository.setScanState(ScanState.STARTED)
+            repository.setState(scanState = ScanState.STARTED)
         }
     }
 
@@ -129,7 +129,7 @@ class BleService : Service(), KoinComponent {
             bluetoothAdapter.bluetoothLeScanner.stopScan(scanCallback)
         }
 
-        repository.setScanState(ScanState.STOPPED)
+        repository.setState(scanState = ScanState.STOPPED)
     }
 
     fun disconnect() {
@@ -173,7 +173,7 @@ class BleService : Service(), KoinComponent {
             result?.device?.let { device ->
                 if (device.name?.startsWith("eSense") == true) {
                     bluetoothAdapter.bluetoothLeScanner.stopScan(this)
-                    repository.setState(CombinedState(ConnectionState.Connecting(device.name), ScanState.STOPPED))
+                    repository.setState(connectionState = ConnectionState.Connecting(device.name), scanState = ScanState.STOPPED)
                     if (!device.createBond()) {
                         device.connect()
                     }
@@ -207,10 +207,10 @@ class BleService : Service(), KoinComponent {
                 BluetoothProfile.STATE_CONNECTED -> {
                     gatt.discoverServices()
                     bluetoothGatt = gatt
-                    repository.setConnectionStatte(ConnectionState.Connected(gatt.device.name))
+                    repository.setState(connectionState = ConnectionState.Connected(gatt.device.name))
                 }
-                BluetoothProfile.STATE_CONNECTING -> repository.setConnectionStatte(ConnectionState.Connecting(gatt.device.name))
-                else -> repository.setConnectionStatte(ConnectionState.Disconnected)
+                BluetoothProfile.STATE_CONNECTING -> repository.setState(connectionState = ConnectionState.Connecting(gatt.device.name))
+                else -> repository.setState(connectionState = ConnectionState.Disconnected)
             }
 
         }

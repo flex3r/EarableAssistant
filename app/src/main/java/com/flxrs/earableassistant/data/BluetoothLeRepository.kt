@@ -45,7 +45,8 @@ class BluetoothLeRepository(private val scope: CoroutineScope) {
     fun updateGyroData(byteArray: ByteArray?) {
         byteArray?.let { bytes ->
             val gyroData = GyroData.fromIMUBytes(bytes)
-            val accData = AccelerationData.fromIMUBytes(bytes, offset)
+            //val accData = AccelerationData.fromIMUBytes(bytes, offset)
+
             when (gyroData.event) {
                 is MotionEvent.Unknown -> startResetJob()
                 else -> {
@@ -60,16 +61,8 @@ class BluetoothLeRepository(private val scope: CoroutineScope) {
         }
     }
 
-    fun setConnectionStatte(state: ConnectionState) {
-        _state.value = _state.value.copy(connectionState = state)
-    }
-
-    fun setScanState(state: ScanState) {
-        _state.value = _state.value.copy(scanState = state)
-    }
-
-    fun setState(state: CombinedState) {
-        _state.value = state
+    fun setState(connectionState: ConnectionState = _state.value.connectionState, scanState: ScanState = _state.value.scanState) {
+        _state.value = CombinedState(connectionState, scanState)
     }
 
     private fun startResetJob() {
