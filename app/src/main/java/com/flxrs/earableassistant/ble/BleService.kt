@@ -116,18 +116,27 @@ class BleService : Service(), KoinComponent {
         closeGattConnection()
     }
 
-    fun findESenseAndConnect() = scope.launch {
-        bluetoothGatt?.disconnect()
-        bluetoothAdapter.bluetoothLeScanner.startScan(scanCallback)
-        repository.setScanState(ScanState.STARTED)
+    fun findESenseAndConnect() {
+        scope.launch {
+            bluetoothGatt?.disconnect()
+            bluetoothAdapter.bluetoothLeScanner.startScan(scanCallback)
+            repository.setScanState(ScanState.STARTED)
+        }
     }
 
     fun stopScan() {
-        bluetoothAdapter.bluetoothLeScanner.stopScan(scanCallback)
+        if (isBluetoothEnabled()) {
+            bluetoothAdapter.bluetoothLeScanner.stopScan(scanCallback)
+        }
+
         repository.setScanState(ScanState.STOPPED)
     }
 
-    fun disconnect() = bluetoothGatt?.disconnect()
+    fun disconnect() {
+        if (isBluetoothEnabled()) {
+            bluetoothGatt?.disconnect()
+        }
+    }
 
     fun isBluetoothEnabled() = bluetoothAdapter.isEnabled
 

@@ -1,5 +1,7 @@
 package com.flxrs.earableassistant.main
 
+import android.app.Activity
+import android.bluetooth.BluetoothAdapter
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -9,14 +11,12 @@ import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.invoke
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.observe
 import com.flxrs.earableassistant.R
 import com.flxrs.earableassistant.ble.BleService
 import com.flxrs.earableassistant.ble.ConnectionState
-import com.flxrs.earableassistant.ble.EnableBluetoothContract
 import com.flxrs.earableassistant.ble.ScanState
 import com.flxrs.earableassistant.data.MotionEvent
 import com.flxrs.earableassistant.databinding.MainFragmentBinding
@@ -33,9 +33,9 @@ class MainFragment : Fragment() {
     private lateinit var binding: MainFragmentBinding
     private var bleService: BleService? = null
 
-    private val enableBluetoothRegistration = registerForActivityResult(EnableBluetoothContract()) { result ->
-        when {
-            result -> bleService?.findESenseAndConnect()
+    private val enableBluetoothRegistration = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        when (result.resultCode) {
+            Activity.RESULT_OK -> bleService?.findESenseAndConnect()
             else -> Snackbar.make(binding.root, R.string.bluetooth_disclaimer, Snackbar.LENGTH_INDEFINITE)
                 .setAction(R.string.enable) { enableBluetoothIfDisabled() }
                 .show()
@@ -60,7 +60,7 @@ class MainFragment : Fragment() {
                 when (state.scanState) {
                     ScanState.STARTED -> bleService?.stopScan()
                     ScanState.STOPPED -> when (state.connectionState) {
-                        is ConnectionState.Disconnected -> bleService?.findESenseAndConnect()
+                        is ConnectionState.Disconnected -> enableBluetoothIfDisabled()
                         else -> bleService?.disconnect()
                     }
                 }
@@ -108,12 +108,12 @@ class MainFragment : Fragment() {
     private fun enableBluetoothIfDisabled() {
         when (bleService?.isBluetoothEnabled()) {
             true -> bleService?.findESenseAndConnect()
-            else -> enableBluetoothRegistration()
+            else -> enableBluetoothRegistration.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
         }
     }
 
     private fun requestPermissions() {
-        requestPermissionsRegistration(
+        requestPermissionsRegistration.launch(
             arrayOf(
                 android.Manifest.permission.ACCESS_FINE_LOCATION,
                 android.Manifest.permission.BLUETOOTH_ADMIN,
