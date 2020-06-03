@@ -77,7 +77,7 @@ class MainFragment : Fragment() {
             motionEvent.observe(viewLifecycleOwner) {
                 when (it) {
                     is MotionEvent.Nod, is MotionEvent.Shake -> {
-                        Snackbar.make(binding.root, "${it.msg} detected", Snackbar.LENGTH_SHORT).show()
+                        Snackbar.make(binding.root, getString(R.string.event_detected, it.msg), Snackbar.LENGTH_SHORT).show()
                     }
                 }
             }

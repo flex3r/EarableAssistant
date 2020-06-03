@@ -33,29 +33,25 @@ class BleService : Service(), KoinComponent {
     private val scope: CoroutineScope by inject()
 
     private var bluetoothGatt: BluetoothGatt? = null
+    private val characteristics = mutableMapOf<UUID, BluetoothGattCharacteristic>()
     private val bluetoothAdapter: BluetoothAdapter by lazy(LazyThreadSafetyMode.NONE) {
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothManager.adapter
     }
-    private val earableCompassBroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            when (intent?.action) {
-                BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
-                    if (intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, 0) == BluetoothDevice.BOND_BONDED) {
-                        val device = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE) ?: return
-                        device.connect()
-                    }
-                }
-                else -> return
-            }
-        }
-    }
-    private val characteristics = mutableMapOf<UUID, BluetoothGattCharacteristic>()
-
     private val telecomManager: TelecomManager by lazy(LazyThreadSafetyMode.NONE) {
         getSystemService(Context.TELECOM_SERVICE) as TelecomManager
     }
 
+    private val earableCompassBroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != BluetoothDevice.ACTION_BOND_STATE_CHANGED) return
+
+            if (intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, 0) == BluetoothDevice.BOND_BONDED) {
+                val device = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE) ?: return
+                device.connect()
+            }
+        }
+    }
     private val callReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action != TelephonyManager.ACTION_PHONE_STATE_CHANGED) return
@@ -84,15 +80,15 @@ class BleService : Service(), KoinComponent {
         return super.onUnbind(intent)
     }
 
-    @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission") // permissions are checked in fragment
     override fun onCreate() {
         registerReceiver(earableCompassBroadcastReceiver, IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED))
         registerReceiver(callReceiver, IntentFilter(TelephonyManager.ACTION_PHONE_STATE_CHANGED))
 
         scope.launch {
-            repository.motionEvent.collect {
+            repository.motionEvent.collect { event ->
                 if (telecomManager.isInCall) {
-                    when (it) {
+                    when (event) {
                         is MotionEvent.Nod -> {
                             Log.i(TAG, "Got MotionEvent.Nod, accepting call")
                             telecomManager.acceptRingingCall()
@@ -126,7 +122,9 @@ class BleService : Service(), KoinComponent {
 
     fun stopScan() {
         if (isBluetoothEnabled()) {
-            bluetoothAdapter.bluetoothLeScanner.stopScan(scanCallback)
+            scope.launch {
+                bluetoothAdapter.bluetoothLeScanner.stopScan(scanCallback)
+            }
         }
 
         repository.setState(scanState = ScanState.STOPPED)
@@ -174,6 +172,8 @@ class BleService : Service(), KoinComponent {
                 if (device.name?.startsWith("eSense") == true) {
                     bluetoothAdapter.bluetoothLeScanner.stopScan(this)
                     repository.setState(connectionState = ConnectionState.Connecting(device.name), scanState = ScanState.STOPPED)
+
+                    // try to bond, otherwise just connect
                     if (!device.createBond()) {
                         device.connect()
                     }
@@ -190,6 +190,7 @@ class BleService : Service(), KoinComponent {
                         characteristics[characteristic.uuid] = characteristic
                     }
                 }
+
                 scope.launch {
                     readCharacteristic(characteristics[ACC_OFFSET_UUID])
 
@@ -212,7 +213,6 @@ class BleService : Service(), KoinComponent {
                 BluetoothProfile.STATE_CONNECTING -> repository.setState(connectionState = ConnectionState.Connecting(gatt.device.name))
                 else -> repository.setState(connectionState = ConnectionState.Disconnected)
             }
-
         }
 
         override fun onCharacteristicChanged(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?) {
