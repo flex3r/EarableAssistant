@@ -42,7 +42,7 @@ class BleService : Service(), KoinComponent {
         getSystemService(Context.TELECOM_SERVICE) as TelecomManager
     }
 
-    private val earableCompassBroadcastReceiver = object : BroadcastReceiver() {
+    private val bluetoothStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action != BluetoothDevice.ACTION_BOND_STATE_CHANGED) return
 
@@ -82,7 +82,7 @@ class BleService : Service(), KoinComponent {
 
     @SuppressLint("MissingPermission") // permissions are checked in fragment
     override fun onCreate() {
-        registerReceiver(earableCompassBroadcastReceiver, IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED))
+        registerReceiver(bluetoothStateReceiver, IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED))
         registerReceiver(callReceiver, IntentFilter(TelephonyManager.ACTION_PHONE_STATE_CHANGED))
 
         scope.launch {
@@ -108,7 +108,7 @@ class BleService : Service(), KoinComponent {
     override fun onDestroy() {
         scope.cancel()
         unregisterReceiver(callReceiver)
-        unregisterReceiver(earableCompassBroadcastReceiver)
+        unregisterReceiver(bluetoothStateReceiver)
         closeGattConnection()
     }
 
@@ -198,7 +198,6 @@ class BleService : Service(), KoinComponent {
                     delay(100)
                     setCharacteristicNotification(characteristics[IMU_DATA_CHARACTERISTIC_UUID], true)
                 }
-
             }
         }
 

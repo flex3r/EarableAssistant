@@ -55,6 +55,7 @@ class MainFragment : Fragment() {
         binding = MainFragmentBinding.inflate(inflater, container, false).apply {
             lifecycleOwner = viewLifecycleOwner
             vm = viewModel
+
             toggleScanButton.setOnClickListener {
                 val state = viewModel.state.value ?: return@setOnClickListener
                 when (state.scanState) {
@@ -73,6 +74,7 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         requestPermissions()
+
         viewModel.apply {
             motionEvent.observe(viewLifecycleOwner) {
                 when (it) {
